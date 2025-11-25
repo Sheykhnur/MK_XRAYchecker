@@ -220,6 +220,12 @@ def parse_vless(url):
             val = params.get(key, [default])
             return val[0] if val else default
 
+        sec = get_p("security", "none")
+        pbk_val = get_p("pbk", "")
+        
+        if pbk_val and sec == "tls":
+            sec = "reality"
+
         return {
             "protocol": "vless",
             "uuid": uuid,
@@ -227,7 +233,7 @@ def parse_vless(url):
             "port": port,
             "encryption": get_p("encryption", "none"),
             "type": get_p("type", "tcp"),
-            "security": get_p("security", "none"),
+            "security": sec,
             "path": urllib.parse.unquote(get_p("path", "")),
             "host": get_p("host", ""),
             "sni": get_p("sni", ""),
