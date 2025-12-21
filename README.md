@@ -8,7 +8,7 @@
 
 <p>
   <a href="https://github.com/MKultra6969/MK_XRAYchecker">
-    <img src="https://img.shields.io/badge/VERSION-1.0.1HOTFIX-magenta?style=for-the-badge&logo=python" alt="Version">
+    <img src="https://img.shields.io/badge/VERSION-1.0.2-magenta?style=for-the-badge&logo=python" alt="Version">
   </a>
   <a href="http://www.wtfpl.net/">
     <img src="https://img.shields.io/badge/LICENSE-WTFPL-red?style=for-the-badge" alt="License">
@@ -43,7 +43,7 @@
 - **1 ядро = 1 пачка прокси.** Скрипт объединяет прокси в группы (пачки) и запускает один процесс Xray на всю группу.
 - **Внутренний параллелизм.** Внутри одного ядра прокси проверяются одновременно, а не по очереди.
 - **Результат:** Снижение нагрузки на процессор и ускорение проверки приблезительно на 36%.
-- **Отсылка лога:** При желании можешь отправить лог на paste.rs в случае ошибки.
+- **Отсылка лога:** При желании можешь отправить лог на **paste.mk69.su** в случае ошибки.
  
 ## ⚡ Описание
 
