@@ -4,3 +4,4 @@ psutil
 pysocks
 rich
 art
+kurigram==2.2.12
