@@ -10,9 +10,10 @@ import shutil
 import logging
 import json
 
-version = "1.0"
-main_link_subs = "https://etoneya.a9fm.site/1"
-test_link_subs = "https://etoneya.a9fm.site/test"
+version = "1.1"
+test_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/testrepo/refs/heads/main/test.txt"
+test2_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/testrepo/refs/heads/main/test2.txt"
+test3_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/testrepo/refs/heads/main/test3.txt"
 args = "--timeout 10 --threads 3 --t2kill 5"
 sleep_time = 500
 
@@ -116,7 +117,7 @@ while True:
         else:
             python_var = "python3"
         
-        os.system(f"{python_var} v2rayChecker.py -u {main_link_subs} {args}")
+        os.system(f"{python_var} v2rayChecker.py -u {test_link_subs} {args}")
         namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
         os.rename("sortedProxy.txt", namefile)
 
@@ -125,13 +126,22 @@ while True:
             app.send_document(log_id, document=namefile, caption=f"MAIN\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
         os.remove(namefile)
 
-        os.system(f"{python_var} v2rayChecker.py -u {test_link_subs} {args}")
+        os.system(f"{python_var} v2rayChecker.py -u {test2_link_subs} {args}")
         namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
         os.rename("sortedProxy.txt", namefile)
 
         app = Client("bot", api_id=2860432, api_hash="2fde6ca0f8ae7bb58844457a239c7214", bot_token=token)
         with app:
             app.send_document(log_id, document=namefile, caption=f"TEST\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
+        os.remove(namefile)
+
+        os.system(f"{python_var} v2rayChecker.py -u {test3_link_subs} {args}")
+        namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        os.rename("sortedProxy.txt", namefile)
+
+        app = Client("bot", api_id=2860432, api_hash="2fde6ca0f8ae7bb58844457a239c7214", bot_token=token)
+        with app:
+            app.send_document(log_id, document=namefile, caption=f"MAIN\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
         os.remove(namefile)
 
         logging.info(f"Sleeping for {sleep_time} seconds")
