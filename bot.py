@@ -11,9 +11,9 @@ import logging
 import json
 
 version = "1.1"
-test_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/testrepo/refs/heads/main/test.txt"
-test2_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/testrepo/refs/heads/main/test2.txt"
-test3_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/testrepo/refs/heads/main/test3.txt"
+test_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/died"
+test2_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/archived"
+test3_link_subs = "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/test"
 args = "--timeout 10 --t2kill 5"
 sleep_time = 500
 
