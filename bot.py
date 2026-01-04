@@ -10,7 +10,7 @@ import shutil
 import logging
 import json
 
-version = "1.1"
+version = "1.2"
 links = [
     "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/died",
     "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/archived",
@@ -20,7 +20,14 @@ links = [
     "https://raw.githubusercontent.com/LowiKLive/BypassWhitelistRu/refs/heads/main/WhiteList-Bypass_Ru.txt",
     #yzewe
     "https://vpn.yzewe.ru/7145117452/K8F8xYDVIcFWauMEi7Q77w",
-    
+    #livpn
+    "https://livpn.webspot.sbs/sub.php?token=5daff2b2a10a65d50798efb4a2e57533",
+    #kort0881
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/subscriptions/all.txt",
+    #v2ray-public
+    "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/V2Ray-Config-By-EbraSha-All-Type.txt",
+    #goida
+    "https://github.com/AvenCores/goida-vpn-configs/raw/refs/heads/main/githubmirror/26.txt",
 ]
 
 args = "--timeout 10 --t2kill 5"
@@ -127,14 +134,17 @@ while True:
             python_var = "python3"
 
         for i in links:
-            os.system(f"{python_var} v2rayChecker.py -u {i} {args}")
-            namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-            os.rename("sortedProxy.txt", namefile)
-
-            app = Client("bot", api_id=2860432, api_hash="2fde6ca0f8ae7bb58844457a239c7214", bot_token=token)
-            with app:
-                app.send_document(log_id, document=namefile, caption=f"{i}\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
-            os.remove(namefile)
+            try:
+                os.system(f"{python_var} v2rayChecker.py -u {i} {args}")
+                namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+                os.rename("sortedProxy.txt", namefile)
+    
+                app = Client("bot", api_id=2860432, api_hash="2fde6ca0f8ae7bb58844457a239c7214", bot_token=token)
+                with app:
+                    app.send_document(log_id, document=namefile, caption=f"{i}\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
+                os.remove(namefile)
+            except:
+                pass
 
         logging.info(f"Sleeping for {sleep_time} seconds")
         time.sleep(sleep_time)
