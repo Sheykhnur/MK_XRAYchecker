@@ -127,7 +127,7 @@ while True:
             python_var = "python3"
 
         for i in links:
-            os.system(f"{python_var} v2rayChecker.py -u {test2_link_subs} {args}")
+            os.system(f"{python_var} v2rayChecker.py -u {i} {args}")
             namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
             os.rename("sortedProxy.txt", namefile)
 
@@ -135,10 +135,6 @@ while True:
             with app:
                 app.send_document(log_id, document=namefile, caption=f"{i}\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
             os.remove(namefile)
-
-            os.system(f"{python_var} v2rayChecker.py -u {test3_link_subs} {args}")
-            namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-            os.rename("sortedProxy.txt", namefile)
 
         logging.info(f"Sleeping for {sleep_time} seconds")
         time.sleep(sleep_time)
