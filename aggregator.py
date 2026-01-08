@@ -1,5 +1,7 @@
 # The original version was taken from https://github.com/y9felix/s
 
+__version__ = "0.9.0"
+
 import urllib.request
 import concurrent.futures
 import json

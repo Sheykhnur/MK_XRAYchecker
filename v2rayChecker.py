@@ -19,7 +19,7 @@
 # ║                                  mk69.su                                ║
 # +═════════════════════════════════════════════════════════════════════════+
 # +═════════════════════════════════════════════════════════════════════════+
-# ║                           VERSION 1.0.3                                 ║
+# ║                           VERSION 1.0.4                                 ║
 # ║             В случае багов/недочётов создайте issue на github           ║
 # ║                                                                         ║
 # +═════════════════════════════════════════════════════════════════════════+
@@ -49,6 +49,10 @@ import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from types import SimpleNamespace
 from threading import Lock, Semaphore
+
+# ВЕРСИЯ СКРИПТА
+# Формат: MAJOR.MINOR.PATCH (SemVer)
+__version__ = "1.1.0"
 
 # --- REALITY / FLOW validation ---
 REALITY_PBK_RE = re.compile(r"^[A-Za-z0-9_-]{43,44}$")   # base64url publicKey
@@ -97,11 +101,31 @@ except ImportError:
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# --- Aggregator Module ---
 try:
     import aggregator
     AGGREGATOR_AVAILABLE = True
 except ImportError:
     AGGREGATOR_AVAILABLE = False
+
+# --- Self-Update Module ---
+try:
+    import updater
+    UPDATER_AVAILABLE = True
+    try:
+        if updater.apply_pending_update_if_any():
+            print("[UPDATER] Обновления применены. Перезапустите скрипт для корректной работы.")
+    except Exception as e:
+        print(f"[UPDATER] Предупреждение: Не удалось применить обновления: {e}")
+except ImportError:
+    UPDATER_AVAILABLE = False
+
+# --- Xray Installer Module ---
+try:
+    import xray_installer
+    XRAY_INSTALLER_AVAILABLE = True
+except ImportError:
+    XRAY_INSTALLER_AVAILABLE = False
 
 # cfg
 CONFIG_FILE = "config.json"
@@ -232,6 +256,25 @@ DEFAULT_CONFIG = {
     # Debug mode: при True используется proxies_per_batch=1 и threads=1
     # для быстрого поиска проблемной ссылки
     "debug_mode": False,
+    
+    # САМООБНОВЛЕНИЕ СКРИПТА
+    # autoupdate: True = автоматически обновлять без вопросов
+    #             False = спрашивать пользователя перед обновлением
+    "autoupdate": False,
+    
+    # Настройки GitHub репозитория для обновлений
+    # Можно поменять на свой форк если нужно
+    "repo_owner": "MKultra6969",
+    "repo_name": "MK_XRAYchecker",
+    "repo_branch": "main",
+
+    # АВТОУСТАНОВКА XRAY CORE
+    # autoinstall_xray: True = автоматически скачать и установить Xray если не найден
+    #                   False = спрашивать пользователя
+    "autoinstall_xray": True,
+    
+    # xray_version: "latest" или конкретная версия типа "v1.8.10"
+    "xray_version": "latest",
 }
 
 def load_sources():
@@ -1232,18 +1275,6 @@ def create_batch_config_file(proxy_list, start_port, work_dir):
     return config_path, valid_proxies, None
 
 def save_failed_batch(config_path, error_output, exit_code):
-    """
-    Сохранение упавшего batch-конфига и лога ошибки в ./failed_batches/
-    для последующей отладки командой: xray run -test -c <file>.json
-    
-    Args:
-        config_path: путь к JSON конфигу ядра
-        error_output: захваченный вывод ошибки
-        exit_code: код выхода процесса ядра
-    
-    Returns:
-        tuple: (путь к скопированному JSON, путь к логу) или (None, None) при ошибке
-    """
     try:
         failed_dir = os.path.join(os.getcwd(), "failed_batches")
         os.makedirs(failed_dir, exist_ok=True)
@@ -1547,14 +1578,36 @@ def run_logic(args):
 
     CORE_PATH = shutil.which(args.core)
     if not CORE_PATH:
+        # Стандартные места где может лежать ядро
         candidates = ["xray.exe", "xray", "v2ray.exe", "v2ray", "bin/xray.exe", "bin/xray"]
         for c in candidates:
              if os.path.exists(c):
                  CORE_PATH = os.path.abspath(c)
                  break
     
+    if not CORE_PATH and XRAY_INSTALLER_AVAILABLE:
+        safe_print("[yellow]>> Ядро (xray/v2ray) не найдено, попытка автоустановки...[/]")
+        try:
+            CORE_PATH = xray_installer.ensure_xray_installed(GLOBAL_CFG)
+            
+            if CORE_PATH:
+                safe_print(f"[green]✓ Xray установлен: {CORE_PATH}[/]")
+                GLOBAL_CFG['core_path'] = CORE_PATH
+                
+                try:
+                    save_cfg = GLOBAL_CFG.copy()
+                    if "sources" in save_cfg: del save_cfg["sources"]
+                    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                        json.dump(save_cfg, f, indent=4)
+                    safe_print(f"[dim]Путь к ядру сохранён в {CONFIG_FILE}[/]")
+                except Exception as e:
+                    safe_print(f"[yellow]Не удалось сохранить конфиг: {e}[/]")
+        except Exception as e:
+            safe_print(f"[red]Ошибка автоустановки Xray: {e}[/]")
+    
     if not CORE_PATH:
-        safe_print(f"[bold red]\n[ERROR] Ядро (xray/v2ray) не найдено![/]")
+        safe_print(f"[bold red]\\n[ERROR] Ядро (xray/v2ray) не найдено![/]")
+        safe_print(f"[dim]Скачайте вручную: https://github.com/XTLS/Xray-core/releases[/]")
         return
         
     safe_print(f"[dim]Core detected: {CORE_PATH}[/]")
@@ -1895,6 +1948,12 @@ def interactive_menu():
         Prompt.ask("\n[bold]Нажмите Enter чтобы вернуться в меню...[/]", password=False)
 
 def main():
+    if UPDATER_AVAILABLE:
+        try:
+            updater.maybe_self_update(GLOBAL_CFG)
+        except Exception as e:
+            safe_print(f"[yellow]Предупреждение: Ошибка проверки обновлений: {e}[/]")
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--menu", action="store_true")
     parser.add_argument("-f", "--file")
@@ -1919,6 +1978,7 @@ def main():
     parser.add_argument("--speed-url", default=GLOBAL_CFG['speed_test_url'], dest="speed_test_url")
     parser.add_argument("--self-test", action="store_true", help="Запустить самопроверку URL парсинга")
     parser.add_argument("--debug", action="store_true", help="Debug режим (proxies_per_batch=1, threads=1)")
+    parser.add_argument("--no-update", action="store_true", help="Пропустить проверку обновлений")
 
     if len(sys.argv) == 1:
         interactive_menu()
