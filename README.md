@@ -13,28 +13,14 @@
   <a href="http://www.wtfpl.net/">
     <img src="https://img.shields.io/badge/LICENSE-WTFPL-red?style=for-the-badge" alt="License">
   </a>
-  <a href="https://t.me/MKextera">
-    <img src="https://img.shields.io/badge/Telegram-MKextera-blue?style=for-the-badge&logo=telegram" alt="Telegram">
+  <a href="https://t.me/MKplusULTRA">
+    <img src="https://img.shields.io/badge/Telegram-MKplusULTRA-blue?style=for-the-badge&logo=telegram" alt="Telegram">
   </a>
 </p>
 
-```
-+═════════════════════════════════════════════════════════════════════════+
-║      ███▄ ▄███▓ ██ ▄█▀ █    ██  ██▓    ▄▄▄█████▓ ██▀███   ▄▄▄           ║
-║     ▓██▒▀█▀ ██▒ ██▄█▒  ██  ▓██▒▓██▒    ▓  ██▒ ▓▒▓██ ▒ ██▒▒████▄         ║
-║     ▓██    ▓██░▓███▄░ ▓██  ▒██░▒██░    ▒ ▓██░ ▒░▓██ ░▄█ ▒▒██  ▀█▄       ║
-║     ▒██    ▒██ ▓██ █▄ ▓▓█  ░██░▒██░    ░ ▓██▓ ░ ▒██▀▀█▄  ░██▄▄▄▄██      ║
-║     ▒██▒   ░██▒▒██▒ █▄▒▒█████▓ ░██████▒  ▒██▒ ░ ░██▓ ▒██▒ ▓█   ▓██▒     ║
-║     ░ ▒░   ░  ░▒ ▒▒ ▓▒░▒▓▒ ▒ ▒ ░ ▒░▓  ░  ▒ ░░   ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░     ║
-║     ░  ░      ░░ ░▒ ▒░░░▒░ ░ ░ ░ ░ ▒  ░    ░      ░▒ ░ ▒░  ▒   ▒▒ ░     ║
-║     ░      ░   ░ ░░ ░  ░░░ ░ ░   ░ ░     ░        ░░   ░   ░   ▒        ║
-║            ░   ░  ░      ░         ░  ░            ░           ░  ░     ║
-║                                                                         ║
-+═════════════════════════════════════════════════════════════════════════+
-║                               MKultra69                                 ║
-+═════════════════════════════════════════════════════════════════════════+
-    
-```
+<img width="2086" height="630" alt="Main menu" src="https://github.com/user-attachments/assets/2dd08923-b671-4c0f-b631-83c0622d359b" />
+Главное меню v1.1.0
+
 
 </div>
  
