@@ -9,3 +9,6 @@ checker_history.log
 result*
 sources.json
 *.log
+geoip.dat
+geosite.dat
+sortedProxy.txt

@@ -1549,6 +1549,7 @@ def Checker(proxyList, localPortStart, testDomain, timeOut, t2exec, t2kill,
         else:
             if progress and task_id is not None:
                 progress.advance(task_id, 1)
+            if GLOBAL_CFG["debug_mode"]: safe_print(f"Error reason: [red]{error_reason}[/]")
             return None
 
     max_workers = min(len(valid_mapping), maxInternalThreads)
