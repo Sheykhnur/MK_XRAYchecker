@@ -10,32 +10,82 @@ import shutil
 import logging
 import json
 
-version = "1.2.1"
+version = "1.2.2"
 links = [
     "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/died",
     "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/archived",
     "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/test",
     "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/1",
-    #igareck
+    # igareck
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt",
-    #lowik
+    # lowik
     "https://raw.githubusercontent.com/LowiKLive/BypassWhitelistRu/refs/heads/main/WhiteList-Bypass_Ru.txt",
-    #yzewe
+    # yzewe
     "https://vpn.yzewe.ru/7145117452/K8F8xYDVIcFWauMEi7Q77w",
-    #livpn
+    # livpn
     "https://livpn.webspot.sbs/sub.php?token=5daff2b2a10a65d50798efb4a2e57533",
-    #kort0881
+    # kort0881
     "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/subscriptions/all.txt",
-    #v2ray-public
+    # v2ray-public
     "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/V2Ray-Config-By-EbraSha-All-Type.txt",
-    #goida
+    # goida
     "https://github.com/AvenCores/goida-vpn-configs/raw/refs/heads/main/githubmirror/26.txt",
-    #zieng2
+    # zieng2
     "https://raw.githubusercontent.com/zieng2/wl/main/vless_lite.txt",
-    #y9felix
+    "https://raw.githubusercontent.com/zieng2/wl/main/vless_universal.txt",
+    # y9felix
     "http://github.com/y9felix/s/raw/main/b#best",
-    #bpwlfree
+    # bpwlfree
     "https://bp.wl.free.nf/confs/merged.txt",
+    # lime
+    "https://raw.githubusercontent.com/LimeHi/LimeVPN/refs/heads/main/LimeVPN.txt",
+    "https://raw.githubusercontent.com/xcom024/vless/refs/heads/main/list.txt",
+    "https://github.com/KiryaScript/white-lists/raw/refs/heads/main/githubmirror/28.txt",
+    "https://github.com/KiryaScript/white-lists/raw/refs/heads/main/githubmirror/27.txt",
+    "https://github.com/KiryaScript/white-lists/raw/refs/heads/main/githubmirror/26.txt",
+    "https://wlr.s3-website.cloud.ru/zNhbYZtBc",
+    "https://s3c3.001.gpucloud.ru/dixsm/htxml",
+    "https://raw.githubusercontent.com/sakha1370/OpenRay/refs/heads/main/output/kind/vless.txt",
+    "https://raw.githubusercontent.com/FLEXIY0/matryoshka-vpn/main/configs/russia_whitelist.txt",
+    "https://storage.yandexcloud.net/cid-vpn/whitelist.txt",
+    "http://fsub.flux.2bd.net/githubmirror/bypass/bypass-all.txt",
+    "https://storage.yandexcloud.net/nllrcn-proxy-subs/subs/main-sub.txt",
+    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-all.txt",
+    "https://raw.githubusercontent.com/vsevjik/OBSpiskov/refs/heads/main/wwh#OBSpiskov",
+    "https://raw.githubusercontent.com/STR97/STRUGOV/refs/heads/main/STR.BYPASS#STR.BYPAS  S👾",
+    "https://bp.wl.free.nf/confs/wl.txt",
+    "https://bp.wl.free.nf/confs/selected.txt",
+    "https://nowmeow.pw/8ybBd3fdCAQ6Ew5H0d66Y1hMbh63GpKUtEXQClIu/whitelist",
+    "https://rstnnl.gitverse.site/sb/dev.txt",
+    "https://raw.githubusercontent.com/EtoNeYaProject/etoneyaproject.github.io/refs/heads/main/whitelist",
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt",
+    "https://raw.githubusercontent.com/55prosek-lgtm/vpn_config_for_russia/refs/heads/main/whitelist.txt",
+    "https://raw.githubusercontent.com/Created-By/Telegram-Eag1e_YT/main/%40Eag1e_YT",
+    "https://raw.githubusercontent.com/Mosifree/-FREE2CONFIG/refs/heads/main/Clash_T  ,H",
+    "https://raw.githubusercontent.com/Mosifree/-FREE2CONFIG/refs/heads/main/T  ,H",
+    "https://raw.githubusercontent.com/Mosifree/-FREE2CONFIG/refs/heads/main/Clash_Reality",
+    "https://raw.githubusercontent.com/Mosifree/-FREE2CONFIG/refs/heads/main/Reality",
+    "https://peige.dpkj.qzz.io/dapei",
+    "https://raw.githubusercontent.com/ovmvo/SubShare/refs/heads/main/sub/permanent/mihomo.yaml",
+    "https://raw.githubusercontent.com/AzadNetCH/Clash/main/AzadNet_hy.txt",
+    "https://raw.githubusercontent.com/amirkma/proxykma/refs/heads/main/mix.txt",
+    "https://world79.spcs.bio/redirect/?Link_id=1125164&redirect=https%3A%2F%2Fraw.githubusercontent.com%2Fmahdibland%2FV2RayAggregator%2Fmaster%2FEternity&sid=",
+    "https://4pda.to/stat/go?u=https%3A%2F%2Fgist.githubusercontent.com%2FSyavar%2F7b868a1682aa4a87d9ec2e9bca729f38%2Fraw%2F75ff3ee7c1bb9e08c5f1d91cbc4ee2b82d25635a%2Fgistfile1.txt&e=140404680",
+    "https://gist.githubusercontent.com/Syavar/3e76222fc05fde9abcb35c2f24572021/raw/e2f7ef901ae4ba5bab7bef20adef41bead7ba626/gistfile1.txt",
+    "https://raw.githubusercontent.com/Kirillo4ka/vpn-configs-for-russia/refs/heads/main/Vless-Rus-Mobile-White-List.txt",
+    "https://raw.githubusercontent.com/vlesscollector/vlesscollector/refs/heads/main/vless_configs.txt",
+    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/Splitted-By-Protocol/vless.txt",
+    "https://github.com/Epodonios/v2ray-configs/raw/main/Splitted-By-Protocol/vless.txt",
+    "https://github.com/jagger235711/V2rayCollector/blob/main/results/hysteria2.txt",
+    "https://raw.githubusercontent.com/hamedp-71/v2go_NEW/main/All_Configs_base64_Sub.txt",
+    "https://raw.githubusercontent.com/hamedp-71/v2go_NEW/main/Splitted-By-Protocol/hy2.txt",
+    "https://raw.githubusercontent.com/ninjastrikers/v2ray-configs/main/splitted/vless.txt",
+    "https://github.com/kismetpro/NodeSuber/raw/refs/heads/main/out/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/Sage-77/V2ray-configs/main/config.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-key-vless/refs/heads/main/vpn-files/all_posts.txt",
+    "https://raw.githubusercontent.com/SoroushImanian/BlackKnight/main/sub/vlessbase64",
+    "https://github.com/kismetpro/NodeSuber/raw/refs/heads/main/Splitted-By-Protocol/vless.txt",
+    "https://github.com/kismetpro/NodeSuber/raw/refs/heads/main/Splitted-By-Protocol/trojan.txt",
 ]
 
 args = "--timeout 10 --t2kill 5"
@@ -139,29 +189,29 @@ except Exception as e:
     logging.error(f"Xray verification failed: {e}")
     sys.exit(1)
 
-while True:
-    try:
-        if platform.system() == "Windows":
-            python_var = "python"
-        else:
-            python_var = "python3"
+# start script
+try:
+    if platform.system() == "Windows":
+        python_var = "python"
+    else:
+        python_var = "python3"
 
-        for i in links:
-            try:
-                os.system(f"{python_var} v2rayChecker.py -u {i} {args}")
-                namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-                os.rename("sortedProxy.txt", namefile)
-    
-                app = Client("bot", api_id=2860432, api_hash="2fde6ca0f8ae7bb58844457a239c7214", bot_token=token)
-                with app:
-                    app.send_document(log_id, document=namefile, caption=f"{i}\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
-                os.remove(namefile)
-            except:
-                pass
+    for i in links:
+        try:
+            os.system(f"{python_var} v2rayChecker.py -u {i} {args}")
+            namefile = f"result_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+            os.rename("sortedProxy.txt", namefile)
 
-        logging.info(f"Sleeping for {sleep_time} seconds")
-        time.sleep(sleep_time)
+            app = Client("bot", api_id=2860432, api_hash="2fde6ca0f8ae7bb58844457a239c7214", bot_token=token)
+            with app:
+                app.send_document(log_id, document=namefile, caption=f"{i}\nС аргументами: {args.replace('--', '-')}\nТеперь спать на {sleep_time}сек")
+            os.remove(namefile)
+        except:
+            pass
 
-    except Exception as e:
-        logging.exception("Unexpected error in main loop")
-        time.sleep(60)
+    logging.info(f"Sleeping for {sleep_time} seconds")
+    time.sleep(sleep_time)
+
+except Exception as e:
+    logging.exception("Unexpected error in main loop")
+    time.sleep(60)
