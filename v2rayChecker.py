@@ -49,6 +49,8 @@ import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from types import SimpleNamespace
 from threading import Lock, Semaphore
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # ВЕРСИЯ СКРИПТА
 # Формат: MAJOR.MINOR.PATCH (SemVer)
@@ -1367,8 +1369,19 @@ def check_connection(local_port, domain, timeout):
     }
     try:
         start = time.time()
-        resp = requests.get(domain, proxies=proxies, timeout=timeout, verify=False)
+        session = requests.Session()
+        retry = Retry(
+            total=3,  # Общее количество повторных попыток
+            backoff_factor=0.5,  # Множитель времени ожидания между попытками
+            status_forcelist=[429, 500, 502, 503, 504],  # Коды ответов, при которых нужно повторять
+            allowed_methods=["HEAD", "GET", "OPTIONS"]  # Методы, для которых разрешен повтор (POST лучше не повторять бездумно)
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        resp = session.get(domain, proxies=proxies, timeout=timeout, verify=False)
         end = time.time()
+        
         if resp.status_code < 400:
             return round((end - start) * 1000), None
         else:
@@ -1567,6 +1580,77 @@ def Checker(proxyList, localPortStart, testDomain, timeOut, t2exec, t2kill,
     
     return current_live_results
 
+#Gemini start
+def smart_deduplicate(links_list):
+    """
+    Фильтрует список ссылок, оставляя только уникальные по техническим параметрам.
+    Игнорирует названия (теги после #).
+    """
+    unique_map = {}
+    
+    for url in links_list:
+        conf = None
+        # Пытаемся распарсить ссылку используя существующие функции
+        try:
+            if url.startswith("vless"): conf = parse_vless(url)
+            elif url.startswith("vmess"): conf = parse_vmess(url)
+            elif url.startswith("trojan"): conf = parse_trojan(url)
+            elif url.startswith("ss"): conf = parse_ss(url)
+            elif url.startswith("hy"): conf = parse_hysteria2(url)
+        except:
+            continue
+
+        if not conf:
+            continue
+
+        # Собираем "отпечаток" (Fingerprint)
+        # Нормализуем строки к нижнему регистру, чтобы избежать дублей из-за регистра
+        
+        protocol = conf.get("protocol")
+        address = conf.get("address", "").lower()
+        port = conf.get("port")
+        
+        # Основной идентификатор (UUID для vmess/vless/trojan/hy2, Password для ss)
+        uuid_or_pass = conf.get("uuid") or conf.get("password", "")
+        uuid_or_pass = str(uuid_or_pass).lower()
+
+        # Дополнительные поля, влияющие на подключение
+        # Используем get() с дефолтными значениями, чтобы кортеж всегда был одного размера/типа
+        net_type = conf.get("type", "").lower()
+        security = conf.get("security", "").lower()
+        path = conf.get("path", "").lower()
+        # Для VLESS Reality
+        pbk = conf.get("pbk", "") # PBK чувствителен к регистру (base64), не лоукейсим!
+        flow = conf.get("flow", "").lower()
+        sni = conf.get("sni", "").lower()
+        
+        # Для Shadowsocks
+        method = conf.get("method", "").lower()
+
+        # Формируем уникальный ключ. Порядок важен!
+        # Если каких-то полей нет в протоколе (напр. flow в vmess), они будут пустыми строками, это ок.
+        fingerprint = (
+            protocol,
+            address,
+            port,
+            uuid_or_pass,
+            net_type,
+            security,
+            path,
+            pbk,
+            flow,
+            sni,
+            method
+        )
+
+        # Логика "Первый пришел — сохранился". 
+        # Если такой отпечаток уже есть, мы пропускаем текущую ссылку.
+        if fingerprint not in unique_map:
+            unique_map[fingerprint] = url
+
+    return list(unique_map.values())
+#Gemini end
+
 def run_logic(args):
     global CORE_PATH, CTRL_C
     
@@ -1663,10 +1747,24 @@ def run_logic(args):
             parsed, count = parse_content(f.read())
             lines.update(parsed)
 
-    full = list(lines)
+    """ full = list(lines)
     if not full:
         safe_print(f"[bold red]Нет прокси для проверки.[/]")
+        return """
+    # --- НАЧАЛО ИЗМЕНЕНИЙ ---
+    raw_list = list(lines)
+    if not raw_list:
+        safe_print(f"[bold red]Нет прокси для проверки.[/]")
         return
+
+    safe_print(f"[cyan]>> Найдено сырых ссылок: {len(raw_list)}. Удаление дубликатов...[/]")
+    full = smart_deduplicate(raw_list)
+    safe_print(f"[green]>> Уникальных серверов после умной фильтрации: {len(full)}[/]")
+    
+    if not full:
+        safe_print(f"[bold red]После фильтрации не осталось ссылок (возможно ошибки парсинга).[/]")
+        return
+    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
     p_per_batch = GLOBAL_CFG.get("proxies_per_batch", 50)
     needed_cores = (len(full) + p_per_batch - 1) // p_per_batch
