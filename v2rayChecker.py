@@ -1370,18 +1370,21 @@ def check_connection(local_port, domain, timeout):
     try:
         start = time.time()
         session = requests.Session()
+        # Устанавливаем уровень логирования для urllib3 на ERROR.
+        # Это скроет сообщения "Retrying...", но оставит критические ошибки.
+        if not GLOBAL_CFG["debug_mode"]: logging.getLogger("urllib3").setLevel(logging.ERROR)
         retry = Retry(
             total=3,  # Общее количество повторных попыток
             backoff_factor=0.5,  # Множитель времени ожидания между попытками
             status_forcelist=[429, 500, 502, 503, 504],  # Коды ответов, при которых нужно повторять
-            allowed_methods=["HEAD", "GET", "OPTIONS"]  # Методы, для которых разрешен повтор (POST лучше не повторять бездумно)
+            allowed_methods=["HEAD", "GET", "OPTIONS"],  # Методы, для которых разрешен повтор (POST лучше не повторять бездумно)
+            raise_on_status=False  # Не выбрасывать исключение при получении кода из status_forcelist, чтобы мы могли обработать его сами
         )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         resp = session.get(domain, proxies=proxies, timeout=timeout, verify=False)
         end = time.time()
-        
         if resp.status_code < 400:
             return round((end - start) * 1000), None
         else:

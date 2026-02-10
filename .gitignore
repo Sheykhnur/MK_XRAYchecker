@@ -7,7 +7,6 @@ bot.session
 checker_history.log
 **/result*
 result*
-sources.json
 *.log
 geoip.dat
 geosite.dat
