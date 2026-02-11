@@ -67,7 +67,7 @@ def get_aggregated_links(url_map, selected_categories, keywords, use_old=False, 
         
         for result in iterator:
             for line in result:
-                cleaned = line.split('#')[0].strip()
+                cleaned = line.strip() #line.split('#')[0].strip()
                 if not cleaned: continue
                 if not PROTOCOL_PATTERN.match(cleaned): continue
                 is_valid = True
@@ -75,6 +75,7 @@ def get_aggregated_links(url_map, selected_categories, keywords, use_old=False, 
                     is_valid = any(word.lower() in line.lower() for word in keywords)
                 if is_valid and cleaned not in old_lines:
                     unique_configs.add(cleaned)
+                    #console.print(cleaned)
 
     config_list = list(unique_configs)
     total_configs = len(config_list)
@@ -113,10 +114,10 @@ def get_aggregated_links(url_map, selected_categories, keywords, use_old=False, 
             if batch_results:
                 ip_country_map.update(batch_results)
                 consecutive_errors = 0
-                time.sleep(1.3)
+                time.sleep(2)
             else:
                 consecutive_errors += 1
-                time.sleep(3)
+                time.sleep(5)
             
         final_lines = []
         for line in config_list:
@@ -128,6 +129,7 @@ def get_aggregated_links(url_map, selected_categories, keywords, use_old=False, 
                 final_lines.append(f"{line} {flag}" if '#' in line else f"{line}#{flag}")
             else:
                 final_lines.append(line)
+            #console.print(final_lines[-1])
                 
         msg = f"АГРЕГАТОР: Собрано {len(final_lines)} новых уникальных конфигураций."
         if console: console.print(f"[bold green]{msg}[/]")
