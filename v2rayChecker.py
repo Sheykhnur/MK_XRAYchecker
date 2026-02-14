@@ -195,6 +195,11 @@ DEFAULT_CONFIG = {
     "xray_version": "latest",
 }
 
+# Глобальный замок для выдачи портов
+PORT_ALLOCATION_LOCK = Lock()
+# Глобальный курсор текущего порта (будет инициализирован позже)
+CURRENT_PORT_CURSOR = 0
+
 def load_sources():
     if os.path.exists(SOURCES_FILE):
         try:
@@ -1135,13 +1140,54 @@ def get_outbound_structure(proxy_url, tag):
         return None
 
 def create_batch_config_file(proxy_list, start_port, work_dir):
+    # Используем глобальные переменные
+    global CURRENT_PORT_CURSOR
+    
     inbounds = []
     outbounds = []
     rules = []
     valid_proxies = []
     
-    for i, url in enumerate(proxy_list):
-        port = start_port + i
+    # === НАЧАЛО БЛОКИРОВКИ (CRITICAL SECTION) ===
+    # Только один поток может находиться внутри этого блока одновременно.
+    # Это полностью исключает Race Condition при выборе порта.
+    with PORT_ALLOCATION_LOCK:
+        # Инициализируем курсор первым значением из конфига, если это первый запуск
+        if CURRENT_PORT_CURSOR == 0:
+            CURRENT_PORT_CURSOR = start_port
+        
+        # Если вдруг мы отстали от переданного аргумента (например, при перезапуске логики)
+        if CURRENT_PORT_CURSOR < start_port:
+            CURRENT_PORT_CURSOR = start_port
+
+        batch_ports_map = [] # Список пар (url, выделенный_порт)
+        
+        for url in proxy_list:
+            # Ищем свободный порт, увеличивая глобальный счетчик
+            while True:
+                candidate = CURRENT_PORT_CURSOR
+                CURRENT_PORT_CURSOR += 1 # Сдвигаем глобальный курсор навсегда
+                
+                # Двойная проверка: свободен ли порт в системе?
+                if not is_port_in_use(candidate):
+                    batch_ports_map.append((url, candidate))
+                    break
+                # Если занят - цикл повторится со следующим CURRENT_PORT_CURSOR
+                
+                # Защита от переполнения портов (больше 65535)
+                if CURRENT_PORT_CURSOR > 65000:
+                    safe_print("[RED] CRITICAL: Закончились свободные порты (limit 65000)!")
+                    return None, None, "No ports left"
+
+    # === КОНЕЦ БЛОКИРОВКИ ===
+    # Дальше работаем с уже выделенными нам уникальными портами
+    
+    # Используем первый порт из пачки для имени файла
+    file_tag_port = batch_ports_map[0][1] if batch_ports_map else 0
+    
+    #for i, url in enumerate(proxy_list):
+    #    port = start_port + i
+    for url, port in batch_ports_map:
         in_tag = f"in_{port}"
         out_tag = f"out_{port}"
         
@@ -1208,7 +1254,10 @@ def create_batch_config_file(proxy_list, start_port, work_dir):
         }
     }
     
-    config_path = os.path.join(work_dir, f"batch_{start_port}.json")
+    # Добавляем timestamp для уникальности файла
+    timestamp = int(time.time() * 1000)
+    config_path = os.path.join(work_dir, f"batch_{file_tag_port}_{timestamp}.json")
+    
     with open(config_path, 'w') as f:
         json.dump(full_config, f, indent=2)
     
