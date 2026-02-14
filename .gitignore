@@ -11,3 +11,4 @@ result*
 geoip.dat
 geosite.dat
 sortedProxy.txt
+failed_batches/
