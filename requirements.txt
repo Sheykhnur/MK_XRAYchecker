@@ -4,4 +4,5 @@ psutil
 pysocks
 rich
 art
+geoip2
 kurigram==2.2.12
