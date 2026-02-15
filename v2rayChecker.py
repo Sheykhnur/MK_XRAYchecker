@@ -54,7 +54,7 @@ from urllib3.util.retry import Retry
 
 # ВЕРСИЯ СКРИПТА
 # Формат: MAJOR.MINOR.PATCH (SemVer)
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 # --- REALITY / FLOW validation ---
 REALITY_PBK_RE = re.compile(r"^[A-Za-z0-9_-]{43,44}$")   # base64url publicKey
@@ -195,7 +195,7 @@ DEFAULT_CONFIG = {
     "xray_version": "latest",
 }
 
-# Глобальный замок для выдачи портов
+# Глобальная блокировка для выдачи портов
 PORT_ALLOCATION_LOCK = Lock()
 # Глобальный курсор текущего порта (будет инициализирован позже)
 CURRENT_PORT_CURSOR = 0
@@ -1166,7 +1166,7 @@ def create_batch_config_file(proxy_list, start_port, work_dir):
             # Ищем свободный порт, увеличивая глобальный счетчик
             while True:
                 candidate = CURRENT_PORT_CURSOR
-                CURRENT_PORT_CURSOR += 1 # Сдвигаем глобальный курсор навсегда
+                CURRENT_PORT_CURSOR += 1 # Сдвигаем глобальный курсор
                 
                 # Двойная проверка: свободен ли порт в системе?
                 if not is_port_in_use(candidate):
@@ -1178,15 +1178,12 @@ def create_batch_config_file(proxy_list, start_port, work_dir):
                 if CURRENT_PORT_CURSOR > 65000:
                     safe_print("[RED] CRITICAL: Закончились свободные порты (limit 65000)!")
                     return None, None, "No ports left"
-
     # === КОНЕЦ БЛОКИРОВКИ ===
     # Дальше работаем с уже выделенными нам уникальными портами
     
     # Используем первый порт из пачки для имени файла
     file_tag_port = batch_ports_map[0][1] if batch_ports_map else 0
     
-    #for i, url in enumerate(proxy_list):
-    #    port = start_port + i
     for url, port in batch_ports_map:
         in_tag = f"in_{port}"
         out_tag = f"out_{port}"
@@ -1733,7 +1730,6 @@ def run_logic(args):
         try:
             agg_links = aggregator.get_aggregated_links(sources_map, cats, kws, log_func=safe_print, console=console)
             lines.update(agg_links)
-            #safe_print(f"[green]>> Список после аггрегатора: {list(lines)}[/]")
         except: pass
 
     if hasattr(args, 'direct_list') and args.direct_list:
@@ -1745,16 +1741,10 @@ def run_logic(args):
             parsed, count = parse_content(f.read())
             lines.update(parsed)
 
-    """ full = list(lines)
-    if not full:
-        safe_print(f"[bold red]Нет прокси для проверки.[/]")
-        return """
-    # --- НАЧАЛО ИЗМЕНЕНИЙ ---
     raw_list = list(lines)
     if not raw_list:
         safe_print(f"[bold red]Нет прокси для проверки.[/]")
         return
-    #safe_print(f"[cyan]>> Список до фильтрации: {raw_list}[/]")
     safe_print(f"[cyan]>> Найдено сырых ссылок: {len(raw_list)}. Удаление дубликатов...[/]")
     full = smart_deduplicate(raw_list)
     safe_print(f"[green]>> Уникальных серверов после умной фильтрации: {len(full)}[/]")
@@ -1762,7 +1752,6 @@ def run_logic(args):
     if not full:
         safe_print(f"[bold red]После фильтрации не осталось ссылок (возможно ошибки парсинга).[/]")
         return
-    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
     p_per_batch = GLOBAL_CFG.get("proxies_per_batch", 50)
     needed_cores = (len(full) + p_per_batch - 1) // p_per_batch
@@ -2013,7 +2002,6 @@ def interactive_menu():
                     time.sleep(2)
                     continue
                 defaults["direct_list"] = raw_links
-                #safe_print(f"[green]Ссылки после аггрегатора: {raw_links}[/]")
             except Exception as e:
                 safe_print(f"[bold red]Ошибка агрегатора: {e}[/]")
                 continue
