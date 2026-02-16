@@ -381,9 +381,10 @@ class SmartLogger:
         except Exception as e:
             console.print(f"[bold red]Ошибка создания лога: {e}[/]")
 
-    def log(self, msg, style=None):
+    def log(self, msg, log=None, style=None):
         with self.lock:
-            console.print(msg, style=style, highlight=False)
+            if not log:
+                console.print(msg, style=style, highlight=False)
 
             try:
                 text_obj = Text.from_markup(str(msg))
@@ -402,8 +403,8 @@ MAIN_LOGGER = SmartLogger("checker_history.log")
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO, datefmt='%H:%M:%S')
 
-def safe_print(msg):
-    MAIN_LOGGER.log(msg)
+def safe_print(msg, log=None):
+    MAIN_LOGGER.log(msg, log)
     
 def upload_log_to_service(is_crash=False):
     log_file = "checker_history.log"
@@ -603,6 +604,7 @@ def parse_vless(url):
         if not url.startswith("vless://"): return None
 
         main_part = url
+        safe_print(f"{Fore.YELLOW}[DEBUG] Parsing VLESS URL: {url}...{Style.RESET_ALL}", log=True) #DEBUG
         tag = "vless"
         if '#' in url:
             parts = url.split('#', 1)
@@ -717,6 +719,8 @@ def parse_vmess(url):
         url = clean_url(url)
         if not url.startswith("vmess://"): return None
 
+        #safe_print(f"{Fore.YELLOW}[DEBUG] Parsing VMess URL: {url}...{Style.RESET_ALL}", log=True) #DEBUG
+        
         if '@' in url:
             if '#' in url:
                 main_part, tag = url.split('#', 1)
@@ -750,13 +754,17 @@ def parse_vmess(url):
                 if net_type in ["http", "h2", "httpupgrade"]:
                     net_type = "xhttp"
             
+                security = get_p("security", "none").lower()
+                if security not in ["tls", "reality", "none", "auto"]:
+                    security = "none"
+            
                 return {
                     "protocol": "vmess",
                     "uuid": uuid,
                     "address": address,
                     "port": int(port),
                     "type": net_type,
-                    "security": get_p("security", "none"),
+                    "security": security,
                     "path": final_path,
                     "host": get_p("host", ""),
                     "sni": get_p("sni", ""),
@@ -784,8 +792,11 @@ def parse_vmess(url):
             data = json.loads(decoded)
             
             net_type = data.get("net", "tcp")
+            security = data.get("tls", "") if data.get("tls") else "none"
             if net_type in ["http", "h2", "httpupgrade"]:
                 net_type = "xhttp"
+            if security not in ["tls", "reality", "none", "auto"]:
+                    security = "none"
             
             return {
                 "protocol": "vmess",
@@ -794,7 +805,7 @@ def parse_vmess(url):
                 "port": int(data.get("port", 0)),
                 "aid": int(data.get("aid", 0)),
                 "type": net_type,
-                "security": data.get("tls", "") if data.get("tls") else "none",
+                "security": security,
                 "path": data.get("path", ""),
                 "host": data.get("host", ""),
                 "sni": data.get("sni", ""),
@@ -980,8 +991,12 @@ def get_outbound_structure(proxy_url, tag):
         if net_type == "http" or header_type == "http":
             return None
         
+        # Гарантируем, что address - строка (для json конфига)
+        proxy_conf["address"] = str(proxy_conf.get("address"))
+        
         streamSettings = {}
         security = proxy_conf.get("security", "none").lower()
+        #safe_print(f"Protocol: {proxy_conf['protocol']}, Security: {security}, NetType: {net_type}, HeaderType: {header_type}") #DEBUG
         
         original_net_type = net_type
         if net_type in ["ws", "websocket"]:
@@ -1056,8 +1071,25 @@ def get_outbound_structure(proxy_url, tag):
                 if proxy_conf.get("headerType") and proxy_conf.get("headerType").lower() != "none":
                     return None
             elif net_type == "kcp":
-                streamSettings["kcpSettings"] = {
-                    "header": {"type": proxy_conf.get("headerType") or "none"}
+                #streamSettings["kcpSettings"] = {
+                #    "header": {"type": proxy_conf.get("headerType") or "none"}
+                #}
+                target_headers = (
+                    "header-dtls",
+                    "header-srtp",
+                    "header-utp",
+                    "header-wechat",
+                    "header-wireguard"
+                )
+                if header_type not in target_headers:
+                    header_type = "mkcp-original"
+                    
+                streamSettings["finalmask"] = {
+                    "udp": [
+                        {
+                            "type": header_type
+                        }
+                    ]
                 }
             elif net_type == "quic":
                 streamSettings["quicSettings"] = {
@@ -1569,6 +1601,7 @@ def smart_deduplicate(links_list):
     """
     Фильтрует список ссылок, оставляя только уникальные по техническим параметрам.
     Игнорирует названия (теги после #).
+    Добавлена защита от None значений в обязательных полях.
     """
     unique_map = {}
     
@@ -1590,35 +1623,46 @@ def smart_deduplicate(links_list):
         # Собираем "отпечаток" (Fingerprint)
         # Нормализуем строки к нижнему регистру, чтобы избежать дублей из-за регистра
         
-        protocol = conf.get("protocol")
-        address = conf.get("address", "").lower()
+        # 1. Проверяем наличие обязательного поля address
+        raw_address = conf.get("address")
+        if not raw_address:
+            # Если адреса нет или он пустой - пропускаем этот блок
+            continue
+
+        # 2. Проверяем наличие порта
+        if not conf.get("port"):
+            continue
+        
+        # Безопасное приведение к строке и нижнему регистру
+        address = str(raw_address).lower()
         port = conf.get("port")
+        protocol = conf.get("protocol")
+        
+        # Вспомогательная функция для безопасного получения строковых параметров
+        def safe_str(val):
+            return str(val).lower() if val is not None else ""
         
         # Основной идентификатор (UUID для vmess/vless/trojan/hy2, Password для ss)
         uuid_or_pass = conf.get("uuid") or conf.get("password", "")
-        uuid_or_pass = str(uuid_or_pass).lower()
+        uuid_or_pass = safe_str(uuid_or_pass)
 
         # Дополнительные поля, влияющие на подключение
         # Используем get() с дефолтными значениями, чтобы кортеж всегда был одного размера/типа
         try:
-            net_type = conf.get("type", "").lower()
-            security = conf.get("security", "").lower()
-            path = conf.get("path", "").lower()
-            # Для VLESS Reality
-            pbk = conf.get("pbk", "") # PBK чувствителен к регистру (base64), не лоукейсим!
-            flow = conf.get("flow", "").lower()
-            sni = conf.get("sni", "").lower()
+            net_type = safe_str(conf.get("type"))
+            security = safe_str(conf.get("security"))
+            path = safe_str(conf.get("path"))
+            
+            # Для VLESS Reality (pbk чувствителен к регистру, не лоукейсим, но проверяем на None)
+            pbk = conf.get("pbk", "")
+            if pbk is None: pbk = ""
+            
+            flow = safe_str(conf.get("flow"))
+            sni = safe_str(conf.get("sni"))
         
-        # Для Shadowsocks
-            method = conf.get("method", "").lower()
+            # Для Shadowsocks
+            method = safe_str(conf.get("method"))
         except:
-            #net_type = ""
-            #security = ""
-            #path = ""
-            #pbk = ""
-            #flow = ""
-            #sni = ""
-            #method = ""
             continue
         
         # Формируем уникальный ключ. Порядок важен!
